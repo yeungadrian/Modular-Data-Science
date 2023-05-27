@@ -93,3 +93,9 @@ target/
 # Hydra logs
 *./outputs
 /outputs
+
+# mlflow
+/mlruns
+
+# Data
+*.csv
