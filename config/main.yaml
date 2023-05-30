@@ -1,6 +1,6 @@
 data:
-  raw: data/interim/iris.csv
-  features: data/processed/iris.csv
+  raw: data/interim/iris.pq
+  features: data/processed/iris.pq
 
 model:
   target: target

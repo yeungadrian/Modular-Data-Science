@@ -8,7 +8,7 @@ conf = OmegaConf.load("config/main.yaml")
 
 @task
 def load_data(path: str) -> pd.DataFrame:
-    df = pd.read_csv(path)
+    df = pd.read_parquet(path)
     return df
 
 
@@ -35,7 +35,7 @@ def add_features(df: pd.DataFrame) -> pd.DataFrame:
 
 @task
 def write_data(df: pd.DataFrame, path: str) -> None:
-    df.to_csv(path)
+    df.to_parquet(path)
     return None
 
 
