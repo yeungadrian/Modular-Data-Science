@@ -2,7 +2,7 @@
 Example of using https://github.com/yeungadrian/DSProjectTemplate in anger.
 
 ## Set up the environment
-1. Install [Python](https://python-poetry.org/docs/#installation)
+1. Install [Python](https://github.com/conda-forge/miniforge)
 2. Install [Poetry](https://python-poetry.org/docs/#installation)
 3. Set up the environment:
 ```

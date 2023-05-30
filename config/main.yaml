@@ -1,13 +1,18 @@
-defaults:
-  - _self_
+data:
+  raw: data/interim/iris.csv
+  features: data/processed/iris.csv
+
+model:
+  target: target
+  features:
+    - sepal_length
+    - sepal_width
+    - petal_length
+    - petal_width
+    - sepal_area
+    - petal_area
+  test_size: 0.25
 
 mlflow:
-  experiment_id: 0
-  experiment_name: Default
+  experiment_name: iris-classifier
   model_file_path: sklearn_classifier
-  test_size: 0.25
-  random_state: 0
-  threshold: 0.5
-  model_registry_name: iris_classifer
-  tags:
-    calibration_date: 2021-12-31

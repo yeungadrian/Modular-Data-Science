@@ -1,6 +1,9 @@
 import pandas as pd
+from omegaconf import OmegaConf
 from prefect import flow, task
 from prefect.task_runners import SequentialTaskRunner
+
+conf = OmegaConf.load("config/main.yaml")
 
 
 @task
@@ -38,10 +41,10 @@ def write_data(df: pd.DataFrame, path: str) -> None:
 
 @flow(task_runner=SequentialTaskRunner())
 def main() -> None:
-    df = load_data("data/interim/iris.csv")
+    df = load_data(conf["data"]["raw"])
     df = rename_columns(df)
     df = add_features(df)
-    write_data(df, "data/processed/iris.csv")
+    write_data(df, conf["data"]["features"])
     return None
 
 
