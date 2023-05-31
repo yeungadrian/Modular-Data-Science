@@ -7,7 +7,7 @@ import xgboost as xgb
 from omegaconf import OmegaConf
 from prefect import flow, task
 from prefect.task_runners import SequentialTaskRunner
-from ray import tune
+from ray import air, tune
 from ray.air import session
 from ray.air.integrations.mlflow import setup_mlflow
 from ray.tune.schedulers import ASHAScheduler
@@ -62,22 +62,24 @@ def validate_model(model, x_test, y_test):
 
 
 def run_experiment(config: dict, data):
-    setup_mlflow(config)
+    mlflow = setup_mlflow(config, rank_zero_only=True)
     x_train, x_test, y_train, y_test = data
     model = train_model(
         config, x_train, y_train, [(x_train, y_train), (x_test, y_test)]
     )
     for key, value in model.evals_result().items():
         for n, i in enumerate(value["mlogloss"]):
-            mlflow.log_metric(f"{key}-mlogloss", float(i), n)
+            name = conf["mlflow"]["xgboost_eval"][key]
+            mlflow.log_metric(f"{name}-mlogloss", float(i), step=n)
     metrics = validate_model(model, x_test, y_test)
     mlflow.log_metrics(metrics)
     metrics["done"] = True
+    mlflow.end_run()
     session.report(metrics)
 
 
 @task
-def tune_model(data):
+def tune_model(data, experiment_name):
     search_space = {
         "objective": "multi:softmax",
         "max_depth": tune.randint(1, 9),
@@ -85,7 +87,7 @@ def tune_model(data):
         "subsample": tune.uniform(0.5, 1.0),
         "learning_rate": tune.loguniform(1e-4, 1e-1),
         "mlflow": {
-            "experiment_name": "iris-classifier",
+            "experiment_name": experiment_name,
             "tracking_uri": mlflow.get_tracking_uri(),
             "registry_uri": None,
         },
@@ -97,9 +99,13 @@ def tune_model(data):
             metric="auc",
             mode="max",
             scheduler=scheduler,
-            num_samples=2,
+            num_samples=12,
+            max_concurrent_trials=4,
         ),
         param_space=search_space,
+        run_config=air.RunConfig(
+            name="tune_model",
+        ),
     )
     results = tuner.fit()
     return results
@@ -122,7 +128,7 @@ def main() -> None:
         conf["model"]["test_size"],
     )
     data = x_train, x_test, y_train, y_test
-    results = tune_model(data)
+    results = tune_model(data, conf["mlflow"]["experiment_name"])
     write_search_results(results, conf["data"]["hp_search"])
     return None
 

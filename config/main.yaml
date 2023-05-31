@@ -17,3 +17,6 @@ model:
 mlflow:
   experiment_name: iris-classifier
   model_file_path: sklearn_classifier
+  xgboost_eval:
+    validation_0 : train
+    validation_1 : validation
