@@ -41,7 +41,12 @@ def split_data(
     return x_train, x_test, y_train, y_test
 
 
-def train_model(config, x_train, y_train, eval_set):
+def train_model(
+    config: dict,
+    x_train: pd.DataFrame,
+    y_train: np.ndarray,
+    eval_set: list[tuple[pd.DataFrame, np.ndarray]],
+) -> xgb.XGBClassifier:
     model = xgb.XGBClassifier(
         objective=config["objective"],
         max_depth=config["max_depth"],
@@ -54,14 +59,18 @@ def train_model(config, x_train, y_train, eval_set):
     return model
 
 
-def validate_model(model, x_test, y_test):
+def validate_model(
+    model: xgb.XGBClassifier, x_test: pd.DataFrame, y_test: np.ndarray
+) -> dict[str, float]:
     y_pred = model.predict_proba(x_test)
     auc = roc_auc_score(y_test, y_pred, multi_class="ovo")
     metrics = {"auc": auc}
     return metrics
 
 
-def run_experiment(config: dict, data):
+def run_experiment(
+    config: dict, data: list[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray]
+) -> None:
     mlflow = setup_mlflow(config, rank_zero_only=True)
     x_train, x_test, y_train, y_test = data
     model = train_model(
@@ -73,13 +82,15 @@ def run_experiment(config: dict, data):
             mlflow.log_metric(f"{name}-mlogloss", float(i), step=n)
     metrics = validate_model(model, x_test, y_test)
     mlflow.log_metrics(metrics)
-    metrics["done"] = True
     mlflow.end_run()
+    metrics["done"] = True
     session.report(metrics)
 
 
 @task
-def tune_model(data, experiment_name):
+def tune_model(
+    data: list[pd.DataFrame, pd.DataFrame, np.ndarray, np.ndarray], experiment_name: str
+):
     search_space = {
         "objective": "multi:softmax",
         "max_depth": tune.randint(1, 9),
