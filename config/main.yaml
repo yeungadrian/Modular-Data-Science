@@ -1,6 +1,7 @@
 data:
   raw: data/interim/iris.pq
   features: data/processed/iris.pq
+  hp_search: data/processed/hp_search.csv
 
 model:
   target: target
